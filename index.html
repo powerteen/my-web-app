@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ระบบหลังบ้านฝากแมว</title>
+    
+    <link rel="manifest" href="manifest.json">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #ffffff;
+        }
+        /* ดึงหน้า GAS Web App มาแสดงเต็มจอ */
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+
+    <iframe src="https://script.google.com/macros/s/AKfycbyDSyTJBVx9-jEh0Bk3zWjXHc3gSpquE7XCF6zM_Eys0-cwQ3fZry9kAeQFOSwmoeaL/exec"></iframe>
+
+    <script>
+        // สั่งให้ Service Worker ทำงาน (จำเป็นสำหรับการเป็น PWA เพื่อให้เปิดเต็มจอได้)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+            .then(() => console.log('Service Worker Registered'))
+            .catch(err => console.log('Service Worker Failed', err));
+        }
+    </script>
+</body>
+</html>
