@@ -38,60 +38,6 @@
             .then(() => console.log('Service Worker Registered'))
             .catch(err => console.log('Service Worker Failed', err));
         }
-        // ==========================================
-// 🌟 ฟังก์ชันเลื่อนหน้าจอซ้าย-ขวาเพื่อเปลี่ยนแท็บ (Swipe Gesture)
-// ==========================================
-const tabOrderList = ['pending', 'assigned', 'history', 'settings'];
-let touchstartX = 0;
-let touchstartY = 0;
-let touchendX = 0;
-let touchendY = 0;
-const swipeThreshold = 50; // ระยะการปัดขั้นต่ำ (พิกเซล) ป้องกันการเผลอโดน
-
-function handleSwipeGesture() {
-    // 1. เช็คว่ามีหน้าต่าง Pop-up เปิดอยู่ไหม (เช่น ดูใบเสร็จ หรืออัปโหลดรูป) 
-    // ถ้ามีเปิดอยู่ จะล็อกไม่ให้เปลี่ยนแท็บ ป้องกันหน้าจอเลื่อนมั่ว
-    const receiptModal = document.getElementById('receipt-modal');
-    const uploadModal = document.getElementById('upload-modal');
-    if ((receiptModal && !receiptModal.classList.contains('hidden')) || 
-        (uploadModal && !uploadModal.classList.contains('hidden'))) {
-        return;
-    }
-
-    const diffX = touchendX - touchstartX;
-    const diffY = touchendY - touchstartY;
-
-    // 2. ตรวจสอบว่าเป็นการปัดซ้าย-ขวา (แนวนอน) มากกว่าการเลื่อนขึ้น-ลง (แนวตั้ง)
-    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > swipeThreshold) {
-        let currentTab = sessionStorage.getItem('activeTab') || 'pending';
-        let currentIndex = tabOrderList.indexOf(currentTab);
-
-        if (diffX < 0) {
-            // 👈 ปัดนิ้วไปทางซ้าย (เลื่อนหน้าจอไปแท็บด้านขวา)
-            if (currentIndex < tabOrderList.length - 1) {
-                switchTab(tabOrderList[currentIndex + 1]);
-            }
-        } else {
-            // 👉 ปัดนิ้วไปทางขวา (เลื่อนหน้าจอไปแท็บด้านซ้าย)
-            if (currentIndex > 0) {
-                switchTab(tabOrderList[currentIndex - 1]);
-            }
-        }
-    }
-}
-
-// 3. จับพิกัดจุดที่นิ้วแตะหน้าจอครั้งแรก
-document.addEventListener('touchstart', e => {
-    touchstartX = e.changedTouches[0].screenX;
-    touchstartY = e.changedTouches[0].screenY;
-}, { passive: true }); // ใส่ passive ให้การเลื่อนหน้าจอขึ้น-ลงยังลื่นไหลปกติ
-
-// 4. จับพิกัดจุดที่นิ้วยกขึ้นจากหน้าจอ แล้วส่งไปคำนวณทิศทาง
-document.addEventListener('touchend', e => {
-    touchendX = e.changedTouches[0].screenX;
-    touchendY = e.changedTouches[0].screenY;
-    handleSwipeGesture();
-}, { passive: true });
     </script>
 </body>
 </html>
