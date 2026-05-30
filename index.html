@@ -39,70 +39,59 @@
             .catch(err => console.log('Service Worker Failed', err));
         }
         // ==========================================
-// 🌟 ฟีเจอร์อัปเกรด: เลื่อนหน้าจอซ้าย-ขวาเพื่อเปลี่ยน Tab (Swipe Gestures)
+// 🌟 ฟังก์ชันเลื่อนหน้าจอซ้าย-ขวาเพื่อเปลี่ยนแท็บ (Swipe Gesture)
 // ==========================================
-(function() {
-    let touchstartX = 0;
-    let touchstartY = 0;
-    let touchendX = 0;
-    let touchendY = 0;
-    
-    // เรียงลำดับชื่อ Tab จากซ้ายไปขวาตามปุ่มเมนูด้านล่างของคุณ 
-    const tabs = ['pending', 'assigned', 'history', 'settings'];
-    
-    // ฟังก์ชันตรวจสอบว่าปัจจุบันแอปเปิดอยู่ที่ Tab ไหน 
-    function getCurrentTab() {
-        if (!document.getElementById('view-pending').classList.contains('hidden')) return 'pending';
-        if (!document.getElementById('view-assigned').classList.contains('hidden')) return 'assigned';
-        if (!document.getElementById('view-history').classList.contains('hidden')) return 'history';
-        if (!document.getElementById('view-settings').classList.contains('hidden')) return 'settings';
-        return 'pending';
+const tabOrderList = ['pending', 'assigned', 'history', 'settings'];
+let touchstartX = 0;
+let touchstartY = 0;
+let touchendX = 0;
+let touchendY = 0;
+const swipeThreshold = 50; // ระยะการปัดขั้นต่ำ (พิกเซล) ป้องกันการเผลอโดน
+
+function handleSwipeGesture() {
+    // 1. เช็คว่ามีหน้าต่าง Pop-up เปิดอยู่ไหม (เช่น ดูใบเสร็จ หรืออัปโหลดรูป) 
+    // ถ้ามีเปิดอยู่ จะล็อกไม่ให้เปลี่ยนแท็บ ป้องกันหน้าจอเลื่อนมั่ว
+    const receiptModal = document.getElementById('receipt-modal');
+    const uploadModal = document.getElementById('upload-modal');
+    if ((receiptModal && !receiptModal.classList.contains('hidden')) || 
+        (uploadModal && !uploadModal.classList.contains('hidden'))) {
+        return;
     }
 
-    // ฟังก์ชันคำนวณและสั่งเปลี่ยนหน้าเมื่อมีการปัดนิ้ว
-    function handleSwipeGesture() {
-        const diffX = touchendX - touchstartX;
-        const diffY = touchendY - touchstartY;
-        
-        // เงื่อนไข: ต้องปัดซ้าย/ขวามากกว่า 80px และแนวตั้ง (ขยับขึ้นลง) ต้องไม่เกิน 60px 
-        // เพื่อป้องกันการเปลี่ยนหน้าโดยไม่ได้ตั้งใจขณะที่ผู้ใช้กำลังเลื่อนจอขึ้น-ลงเพื่อดูข้อมูล
-        if (Math.abs(diffX) > 80 && Math.abs(diffY) < 60) {
-            const currentTab = getCurrentTab();
-            let currentIndex = tabs.indexOf(currentTab);
-            
-            if (diffX < 0) {
-                // 👈 ผู้ใช้ปัดไปทางซ้าย (แปลว่าต้องการดูหน้าถัดไปทางขวา)
-                if (currentIndex < tabs.length - 1) {
-                    switchTab(tabs[currentIndex + 1]); // สั่งเรียกฟังก์ชันเดิมของคุณ 
-                }
-            } else {
-                // 👉 ผู้ใช้ปัดไปทางขวา (แปลว่าต้องการย้อนกลับไปหน้าก่อนหน้าทางซ้าย)
-                if (currentIndex > 0) {
-                    switchTab(tabs[currentIndex - 1]); // สั่งเรียกฟังก์ชันเดิมของคุณ 
-                }
+    const diffX = touchendX - touchstartX;
+    const diffY = touchendY - touchstartY;
+
+    // 2. ตรวจสอบว่าเป็นการปัดซ้าย-ขวา (แนวนอน) มากกว่าการเลื่อนขึ้น-ลง (แนวตั้ง)
+    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > swipeThreshold) {
+        let currentTab = sessionStorage.getItem('activeTab') || 'pending';
+        let currentIndex = tabOrderList.indexOf(currentTab);
+
+        if (diffX < 0) {
+            // 👈 ปัดนิ้วไปทางซ้าย (เลื่อนหน้าจอไปแท็บด้านขวา)
+            if (currentIndex < tabOrderList.length - 1) {
+                switchTab(tabOrderList[currentIndex + 1]);
+            }
+        } else {
+            // 👉 ปัดนิ้วไปทางขวา (เลื่อนหน้าจอไปแท็บด้านซ้าย)
+            if (currentIndex > 0) {
+                switchTab(tabOrderList[currentIndex - 1]);
             }
         }
     }
+}
 
-    // ดักจับจังหวะเริ่มแตะหน้าจอ
-    document.addEventListener('touchstart', e => {
-        // 🛠️ ข้ามการทำงานถ้าผู้ใช้กำลังพิมพ์ ข้อความ, เลื่อนกล่องตัวเลือก (Select) หรือเปิดดูรูปสลิป (Modal)
-        // เพื่อไม่ให้ระบบปัดหน้าจอไปรบกวนการทำงานปกติ
-        if (e.target.closest('input, textarea, select, #receipt-modal')) return; [cite: 14, 15, 19, 23]
-        
-        touchstartX = e.changedTouches[0].screenX;
-        touchstartY = e.changedTouches[0].screenY;
-    }, { passive: true });
+// 3. จับพิกัดจุดที่นิ้วแตะหน้าจอครั้งแรก
+document.addEventListener('touchstart', e => {
+    touchstartX = e.changedTouches[0].screenX;
+    touchstartY = e.changedTouches[0].screenY;
+}, { passive: true }); // ใส่ passive ให้การเลื่อนหน้าจอขึ้น-ลงยังลื่นไหลปกติ
 
-    // ดักจับจังหวะปล่อยนิ้วจากหน้าจอ
-    document.addEventListener('touchend', e => {
-        if (e.target.closest('input, textarea, select, #receipt-modal')) return; [cite: 14, 15, 19, 23]
-        
-        touchendX = e.changedTouches[0].screenX;
-        touchendY = e.changedTouches[0].screenY;
-        handleSwipeGesture();
-    }, { passive: true });
-})();
+// 4. จับพิกัดจุดที่นิ้วยกขึ้นจากหน้าจอ แล้วส่งไปคำนวณทิศทาง
+document.addEventListener('touchend', e => {
+    touchendX = e.changedTouches[0].screenX;
+    touchendY = e.changedTouches[0].screenY;
+    handleSwipeGesture();
+}, { passive: true });
     </script>
 </body>
 </html>
