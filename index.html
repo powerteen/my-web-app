@@ -38,6 +38,71 @@
             .then(() => console.log('Service Worker Registered'))
             .catch(err => console.log('Service Worker Failed', err));
         }
+        // ==========================================
+// 🌟 ฟีเจอร์อัปเกรด: เลื่อนหน้าจอซ้าย-ขวาเพื่อเปลี่ยน Tab (Swipe Gestures)
+// ==========================================
+(function() {
+    let touchstartX = 0;
+    let touchstartY = 0;
+    let touchendX = 0;
+    let touchendY = 0;
+    
+    // เรียงลำดับชื่อ Tab จากซ้ายไปขวาตามปุ่มเมนูด้านล่างของคุณ 
+    const tabs = ['pending', 'assigned', 'history', 'settings'];
+    
+    // ฟังก์ชันตรวจสอบว่าปัจจุบันแอปเปิดอยู่ที่ Tab ไหน 
+    function getCurrentTab() {
+        if (!document.getElementById('view-pending').classList.contains('hidden')) return 'pending';
+        if (!document.getElementById('view-assigned').classList.contains('hidden')) return 'assigned';
+        if (!document.getElementById('view-history').classList.contains('hidden')) return 'history';
+        if (!document.getElementById('view-settings').classList.contains('hidden')) return 'settings';
+        return 'pending';
+    }
+
+    // ฟังก์ชันคำนวณและสั่งเปลี่ยนหน้าเมื่อมีการปัดนิ้ว
+    function handleSwipeGesture() {
+        const diffX = touchendX - touchstartX;
+        const diffY = touchendY - touchstartY;
+        
+        // เงื่อนไข: ต้องปัดซ้าย/ขวามากกว่า 80px และแนวตั้ง (ขยับขึ้นลง) ต้องไม่เกิน 60px 
+        // เพื่อป้องกันการเปลี่ยนหน้าโดยไม่ได้ตั้งใจขณะที่ผู้ใช้กำลังเลื่อนจอขึ้น-ลงเพื่อดูข้อมูล
+        if (Math.abs(diffX) > 80 && Math.abs(diffY) < 60) {
+            const currentTab = getCurrentTab();
+            let currentIndex = tabs.indexOf(currentTab);
+            
+            if (diffX < 0) {
+                // 👈 ผู้ใช้ปัดไปทางซ้าย (แปลว่าต้องการดูหน้าถัดไปทางขวา)
+                if (currentIndex < tabs.length - 1) {
+                    switchTab(tabs[currentIndex + 1]); // สั่งเรียกฟังก์ชันเดิมของคุณ 
+                }
+            } else {
+                // 👉 ผู้ใช้ปัดไปทางขวา (แปลว่าต้องการย้อนกลับไปหน้าก่อนหน้าทางซ้าย)
+                if (currentIndex > 0) {
+                    switchTab(tabs[currentIndex - 1]); // สั่งเรียกฟังก์ชันเดิมของคุณ 
+                }
+            }
+        }
+    }
+
+    // ดักจับจังหวะเริ่มแตะหน้าจอ
+    document.addEventListener('touchstart', e => {
+        // 🛠️ ข้ามการทำงานถ้าผู้ใช้กำลังพิมพ์ ข้อความ, เลื่อนกล่องตัวเลือก (Select) หรือเปิดดูรูปสลิป (Modal)
+        // เพื่อไม่ให้ระบบปัดหน้าจอไปรบกวนการทำงานปกติ
+        if (e.target.closest('input, textarea, select, #receipt-modal')) return; [cite: 14, 15, 19, 23]
+        
+        touchstartX = e.changedTouches[0].screenX;
+        touchstartY = e.changedTouches[0].screenY;
+    }, { passive: true });
+
+    // ดักจับจังหวะปล่อยนิ้วจากหน้าจอ
+    document.addEventListener('touchend', e => {
+        if (e.target.closest('input, textarea, select, #receipt-modal')) return; [cite: 14, 15, 19, 23]
+        
+        touchendX = e.changedTouches[0].screenX;
+        touchendY = e.changedTouches[0].screenY;
+        handleSwipeGesture();
+    }, { passive: true });
+})();
     </script>
 </body>
 </html>
